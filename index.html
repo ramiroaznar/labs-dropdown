@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>How to select layers+widgets from a dropdown menu</title>
+    <meta name=viewport content="width=device-width initial-scale=1">
+    <link href="http://cartodb.com/favicon.ico" rel="shortcut icon" />
+    <link rel="stylesheet" href="./themes/css/deep-insights.css" />
+    <script src="./scripts/deep-insights.uncompressed.js"></script>
+    <style type="text/css">
+        html,
+        body {
+            position: relative;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <select name="select" class="CDB-SelectFake CDB-Text" style="top: 40px;bottom: auto;position: absolute;z-index: 100;left: 105px; width: 120px" id='selector'>
+      <option value="reset" selected>Choose Layer</option>
+      <option value="world">World Borders</option>
+      <option value="places">Populated Places</option>
+    </select>
+
+    <div class="Dashboard-canvas" id="dashboard"></div>
+
+    <script>
+        window.myapp = window.myapp || {};
+
+        window.onload = function () {
+
+            var diJSON = 'https://team.cartodb.com/u/ramirocartodb/api/v3/viz/4e5e4bf8-3df3-11e6-8345-0ecd1babdde5/viz.json',
+                username = diJSON.match(/\/u\/(.+)\/api\/v\d\/|:\/\/(.+)\.cartodb\.com\/api/i)[1],
+                myapp = window.myapp;
+
+            myapp.sqlclient = new cartodb.SQL({ // SQL client
+                user: username,
+                protocol: "https",
+                sql_api_template: "https://{user}.cartodb.com:443"
+            });
+
+            cartodb.deepInsights.createDashboard('#dashboard', diJSON, {
+                no_cdn: false
+            }, function (err, dashboard) {
+                myapp.map = dashboard.getMap();
+                myapp.Lmap = myapp.map.getNativeMap(); // Leaflet map object
+                myapp.layers = myapp.map.getLayers(); // CartoDB layers
+                // if the layer has an analysis node, its SQL is not exposed in the API
+
+                var worldLayer = myapp.layers[1],
+                    placesLayer = myapp.layers[2];
+
+                myapp.layers.map(function (a) {
+                    var tmp;
+                    if (a.attributes.sql == void 0) {
+                        tmp = dashboard._dashboard.vis._analysisCollection.models.filter(function (b) {
+                            return b.id == a.attributes.source;
+                        })[0];
+                        if (tmp != void 0) a.attributes.sql = tmp.attributes.query;
+                    }
+                    return a;
+                });
+                myapp.widgetsdata = dashboard.getWidgets().map(function (a) { // Array of widgets’ data models
+                    return a.dataviewModel
+                });
+
+                myapp.wcontainer = cdb.$('#' + vis.$el.context.id + ' .CDB-Widget-canvasInner').get(0); // Container
+
+                var LayerActions = {
+
+                    reset: function(){
+                        worldLayer.show();
+                        placesLayer.show();
+
+                        var widgets = dashboard.getWidgets();
+
+                        for (var i = widgets.length - 1; i >= 0; i--) {
+                            widgets[i].remove();
+                        }
+                    },
+
+                    world: function(){
+
+                        var widgets = dashboard.getWidgets();
+
+                        for (var i = widgets.length - 1; i >= 0; i--) {
+                            widgets[i].remove();
+                        }
+
+                        var sum = {
+                            "type": "formula",
+                            "title": "World - Total Population",
+                            "column": "pop2005",
+                            "operation": "sum"
+                        };
+
+                        var avg = {
+                            "type": "formula",
+                            "title": "World -Average Population",
+                            "column": "pop2005",
+                            "operation": "avg"
+                        };
+
+                        var histo = {
+                            "type": "histogram",
+                            "title": "World - Population Histogram",
+                            "column": "pop2005",
+                            "bins": 20
+                        };
+
+                        var country = {
+                            "type": "category",
+                            "title": "World - Countries",
+                            "column": "name"
+                        };
+
+                        dashboard.createFormulaWidget(sum,worldLayer);
+                        dashboard.createFormulaWidget(avg,worldLayer);
+                        dashboard.createHistogramWidget(histo,worldLayer);
+                        dashboard.createCategoryWidget(country,worldLayer);
+
+                    if (placesLayer.attributes.visible == true){
+                        placesLayer.hide();
+                        cdb.$(".cartodb-legend-stack").css("display","none");
+                    }else{
+                        worldLayer.show();
+                        cdb.$(".cartodb-legend-stack").css("display","block");
+                        }
+                    },
+
+                    places: function(){
+
+                        var widgets = dashboard.getWidgets();
+
+                        for (var i = widgets.length - 1; i >= 0; i--) {
+                            widgets[i].remove();
+                        }
+
+                        var sum = {
+                            "type": "formula",
+                            "title": "Places - Population",
+                            "column": "pop_max",
+                            "operation": "sum"
+                        };
+
+                        var avg = {
+                            "type": "formula",
+                            "title": "Places - Average Population",
+                            "column": "pop_max",
+                            "operation": "avg"
+                        };
+
+                        var histo = {
+                            "type": "histogram",
+                            "title": "Places - Population Histogram",
+                            "column": "pop_max",
+                            "bins": 10
+                        };
+
+                        var city = {
+                            "type": "category",
+                            "title": "Places - Cities",
+                            "column": "name"
+                        };
+
+                        var country = {
+                            "type": "category",
+                            "title": "Places - Countries",
+                            "column": "adm0name"
+                        };
+
+                        dashboard.createFormulaWidget(sum,placesLayer);
+                        dashboard.createFormulaWidget(avg,placesLayer);
+                        dashboard.createHistogramWidget(histo,placesLayer);
+                        dashboard.createCategoryWidget(country,placesLayer);
+
+                        var placesWidgets = dashboard.getWidgets();
+
+                        if (worldLayer.attributes.visible == true){
+                            worldLayer.hide();
+                            placesLayer.show();
+                        }else{
+                            placesLayer.show();
+                        }
+                    }
+                };
+
+                cdb.$('#selector').change(function() {
+                    LayerActions[cdb.$(this).val()]();
+                }); 
+              
+            });
+        }
+    </script>
+</body>
+
+</html>

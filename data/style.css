@@ -1,0 +1,61 @@
+/* Dropdown Menu Block */
+
+#populated_places{ 
+  marker-fill-opacity: 0.6; 
+  marker-line-color: #808080; 
+  marker-line-width: 0.5;
+  marker-width: 3;
+  marker-line-opacity: 0;
+  marker-placement: point; 
+  marker-multi-policy: largest; 
+  marker-type: ellipse; 
+  marker-fill: #000000; 
+  marker-allow-overlap: true; 
+  marker-clip: false; }
+
+/** n-tile scale */
+
+@color0: #ede5cf;
+@color1: #e0c2a2;
+@color2: #d39c83;
+@color3: #c1766f;
+@color4: #a65461;
+@color5: #813753;
+@color6: #541f3f;
+
+#world_borders{
+polygon-opacity: 0.9;
+polygon-fill: @color0;
+line-opacity: 1;
+line-width: 0.5;
+line-color: lighten(@color0,5);
+
+	[pop_norm>0]{
+		polygon-fill: @color0;
+		line-color: lighten(@color0,5);
+       }
+	[pop_norm>39551.0563326419]{
+		polygon-fill: @color1;
+		line-color: lighten(@color1,5);
+       }
+	[pop_norm>218676.031092689]{
+		polygon-fill: @color2;
+		line-color: lighten(@color2,5);
+       }
+	[pop_norm>499811.971392568]{
+		polygon-fill: @color3;
+		line-color: lighten(@color3,5);
+       }
+	[pop_norm>872969.924959756]{
+		polygon-fill: @color4;
+		line-color: lighten(@color4,5);
+       }
+	[pop_norm>1476520.70301472]{
+		polygon-fill: @color5;
+		line-color: lighten(@color5,5);
+       }
+	[pop_norm>3820448.87780549]{
+		polygon-fill: @color6;
+		line-color: lighten(@color6,5);
+       }
+}
