@@ -50,7 +50,6 @@
                 myapp.map = dashboard.getMap();
                 myapp.Lmap = myapp.map.getNativeMap(); // Leaflet map object
                 myapp.layers = myapp.map.getLayers(); // CartoDB layers
-                // if the layer has an analysis node, its SQL is not exposed in the API
 
                 var worldLayer = myapp.layers[1],
                     placesLayer = myapp.layers[2];
@@ -65,6 +64,7 @@
                     }
                     return a;
                 });
+
                 myapp.widgetsdata = dashboard.getWidgets().map(function (a) { // Array of widgets’ data models
                     return a.dataviewModel
                 });
@@ -86,6 +86,9 @@
 
                     world: function(){
 
+                        worldLayer.show();
+                        placesLayer.hide();
+                        
                         var widgets = dashboard.getWidgets();
 
                         for (var i = widgets.length - 1; i >= 0; i--) {
@@ -110,7 +113,7 @@
                             "type": "histogram",
                             "title": "World - Population Histogram",
                             "column": "pop2005",
-                            "bins": 20
+                            "bins": 10
                         };
 
                         var country = {
@@ -124,17 +127,13 @@
                         dashboard.createHistogramWidget(histo,worldLayer);
                         dashboard.createCategoryWidget(country,worldLayer);
 
-                    if (placesLayer.attributes.visible == true){
-                        placesLayer.hide();
-                        cdb.$(".cartodb-legend-stack").css("display","none");
-                    }else{
-                        worldLayer.show();
-                        cdb.$(".cartodb-legend-stack").css("display","block");
-                        }
                     },
 
                     places: function(){
 
+                        placesLayer.show();
+                        worldLayer.hide();
+                        
                         var widgets = dashboard.getWidgets();
 
                         for (var i = widgets.length - 1; i >= 0; i--) {
@@ -179,14 +178,6 @@
                         dashboard.createHistogramWidget(histo,placesLayer);
                         dashboard.createCategoryWidget(country,placesLayer);
 
-                        var placesWidgets = dashboard.getWidgets();
-
-                        if (worldLayer.attributes.visible == true){
-                            worldLayer.hide();
-                            placesLayer.show();
-                        }else{
-                            placesLayer.show();
-                        }
                     }
                 };
 
